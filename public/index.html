@@ -1,0 +1,19 @@
+<form id="f">
+  <input type="text" id="t">
+  <input type="submit" value="Сохранить">
+</form>
+
+<script>
+document.getElementById("f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const text = document.getElementById("t").value;
+
+  const r = await fetch("/api/save", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ userInput: text })
+  });
+
+  alert(await r.text());
+});
+</script>
