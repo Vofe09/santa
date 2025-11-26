@@ -1,68 +1,53 @@
-import { createClient } from "@supabase/supabase-js";
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
 
-async function getRawBody(req) {
-  return new Promise((resolve) => {
-    let data = "";
-    req.on("data", (chunk) => (data += chunk));
-    req.on("end", () => resolve(data));
-  });
-}
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  try {
-    if (req.method !== "POST") {
-      res.status(405).send("Method not allowed");
-      return;
-    }
+  console.log("METHOD:", req.method);
 
-    const raw = await getRawBody(req);
-    console.log("RAW BODY:", raw);
+  // Читаем тело вручную
+  let raw = "";
+  await new Promise(resolve => {
+    req.on("data", chunk => raw += chunk);
+    req.on("end", resolve);
+  });
 
-    let body;
-    try {
-      body = JSON.parse(raw);
-    } catch {
-      return res.status(400).send("Bad JSON");
-    }
+  console.log("RAW BODY:", raw);
 
-    if (!body.userInput) {
-      return res.status(400).send("Нет данных");
-    }
-
-    const fileName = "data.json";
-
-    const { data: file } = await supabase
-      .storage
-      .from(process.env.SUPABASE_BUCKET)
-      .download(fileName);
-
-    let arr = [];
-
-    if (file) {
-      const text = await file.text();
-      try {
-        arr = JSON.parse(text);
-      } catch {}
-    }
-
-    arr.push(body.userInput);
-
-    await supabase
-      .storage
-      .from(process.env.SUPABASE_BUCKET)
-      .upload(fileName, JSON.stringify(arr, null, 2), {
-        upsert: true,
-        contentType: "application/json"
-      });
-
-    res.status(200).send("Сохранено");
-  } catch (e) {
-    console.error("SERVER ERROR:", e);
-    res.status(500).send("Ошибка сервера");
+  if (!raw) {
+    return res.status(400).json({ error: "Empty body" });
   }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    return res.status(400).json({ error: "Invalid JSON" });
+  }
+
+  const { name, gift } = data;
+
+  if (!name || !gift) {
+    return res.status(400).json({ error: "Missing fields" });
+  }
+
+  // Инициализация Supabase
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  // Запись в БД
+  const { error } = await supabase.from("wishes").insert({ name, gift });
+
+  if (error) {
+    console.log("SUPABASE ERROR:", error);
+    return res.status(500).json({ error: "Supabase error" });
+  }
+
+  res.status(200).json({ ok: true });
 }
