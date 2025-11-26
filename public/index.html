@@ -2,86 +2,137 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Тайный Санта</title>
+<title>Santa by N.Kovalev</title>
 <style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
-    position: relative;
-  }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+  padding: 0 15px;      /* помогает на малых экранах */
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.92);
+  padding: 40px 60px;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  text-align: center;
+  animation: fadeIn 1.2s ease forwards;
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  max-width: 450px;     /* адаптивный лимит */
+}
+
+h1 {
+  margin-bottom: 30px;
+  color: #4a90e2;
+  animation: slideDown 1s ease forwards;
+  font-size: 32px;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  transition: transform 0.2s;
+  box-sizing: border-box;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  transform: scale(1.04);
+  border-color: #4a90e2;
+}
+
+input[type="submit"] {
+  padding: 15px 40px;
+  border: none;
+  border-radius: 10px;
+  background: #4a90e2;
+  color: #fff;
+  font-size: 17px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+input[type="submit"]:hover {
+  background: #357abd;
+  transform: scale(1.05);
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {opacity: 0; transform: scale(0.8);}
+  to   {opacity: 1; transform: scale(1);}
+}
+@keyframes slideDown {
+  from {opacity:0; transform: translateY(-20px);}
+  to   {opacity:1; transform: translateY(0);}
+}
+
+/* Снежинки */
+.snowflake {
+  position: absolute;
+  top: -10px;
+  color: #fff;
+  font-size: 1em;
+  user-select: none;
+  z-index: 0;
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes fall {
+  0% {transform: translateY(0) rotate(0deg);}
+  100% {transform: translateY(110vh) rotate(360deg);}
+}
+
+/* 📱 Телефоны */
+@media (max-width: 480px) {
   .container {
-    background: rgba(255, 255, 255, 0.9);
-    padding: 40px 60px;
-    border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-    text-align: center;
-    animation: fadeIn 1.2s ease forwards;
-    z-index: 1;
-    position: relative;
+    padding: 25px 25px;
+    border-radius: 15px;
+    max-width: 100%;
   }
+
   h1 {
-    margin-bottom: 30px;
-    color: #4a90e2;
-    animation: slideDown 1s ease forwards;
+    font-size: 24px;
+    margin-bottom: 20px;
   }
+
   input[type="text"] {
-    width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    font-size: 16px;
-    transition: transform 0.2s;
+    padding: 13px;
+    font-size: 15px;
   }
-  input[type="text"]:focus {
-    outline: none;
-    transform: scale(1.05);
-    border-color: #4a90e2;
-  }
+
   input[type="submit"] {
-    padding: 15px 40px;
-    border: none;
-    border-radius: 10px;
-    background: #4a90e2;
-    color: #fff;
+    padding: 13px 25px;
     font-size: 16px;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: background 0.3s, transform 0.2s;
   }
-  input[type="submit"]:hover {
-    background: #357abd;
-    transform: scale(1.05);
+}
+
+/* 📱 Очень маленькие экраны (iPhone SE, старые Android) */
+@media (max-width: 360px) {
+  .container {
+    padding: 20px 20px;
   }
-  @keyframes fadeIn {
-    from {opacity: 0; transform: scale(0.8);}
-    to {opacity: 1; transform: scale(1);}
+
+  h1 {
+    font-size: 22px;
   }
-  @keyframes slideDown {
-    from {opacity:0; transform: translateY(-20px);}
-    to {opacity:1; transform: translateY(0);}
-  }
-  .snowflake {
-    position: absolute;
-    top: -10px;
-    color: #fff;
-    font-size: 1em;
-    user-select: none;
-    z-index: 0;
-    animation-name: fall;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-  }
-  @keyframes fall {
-    0% {transform: translateY(0) rotate(0deg);}
-    100% {transform: translateY(110vh) rotate(360deg);}
-  }
+}
 </style>
 </head>
 <body>
