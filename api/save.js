@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     }
 
     const fileName = "data.json";
-
+    console.log("REQ HEADERS:", req.headers);
     // Загружаем JSON
     const { data: file } = await supabase
       .storage
@@ -75,6 +75,6 @@ export default async function handler(req, res) {
     console.error(err);
     res.status(500).send("Ошибка");
   }
-  console.log("BODY:", body);
+  
 
 }
