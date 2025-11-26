@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (!userInput) return res.status(400).send("Нет данных");
 
   const fileName = "data.txt";
-
+// dwa
   const { data: existing, error: downloadError } = await supabase
     .storage
     .from(process.env.SUPABASE_BUCKET)
