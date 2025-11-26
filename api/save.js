@@ -1,46 +1,41 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+
+async function getRawBody(req) {
+  return new Promise((resolve) => {
+    let data = "";
+    req.on("data", (chunk) => (data += chunk));
+    req.on("end", () => resolve(data));
+  });
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export const config = {
-  api: {
-    bodyParser: false, // важно
-  },
-};
-
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", chunk => data += chunk);
-    req.on("end", () => {
-      try {
-        resolve(JSON.parse(data || "{}"));
-      } catch (e) {
-        reject(e);
-      }
-    });
-  });
-}
-
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST")
-      return res.status(405).send("Метод запрещён");
+    if (req.method !== "POST") {
+      res.status(405).send("Method not allowed");
+      return;
+    }
 
-    const body = await readBody(req);
-    const userInput = body.userInput;
+    const raw = await getRawBody(req);
+    console.log("RAW BODY:", raw);
 
-    if (!userInput) {
-      console.log("No user input")
+    let body;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      return res.status(400).send("Bad JSON");
+    }
+
+    if (!body.userInput) {
       return res.status(400).send("Нет данных");
     }
 
     const fileName = "data.json";
-    console.log("REQ HEADERS:", req.headers);
-    // Загружаем JSON
+
     const { data: file } = await supabase
       .storage
       .from(process.env.SUPABASE_BUCKET)
@@ -52,29 +47,22 @@ export default async function handler(req, res) {
       const text = await file.text();
       try {
         arr = JSON.parse(text);
-      } catch {
-        arr = [];
-      }
+      } catch {}
     }
 
-    arr.push(userInput);
-
-    const buffer = Buffer.from(JSON.stringify(arr, null, 2));
+    arr.push(body.userInput);
 
     await supabase
       .storage
       .from(process.env.SUPABASE_BUCKET)
-      .upload(fileName, buffer, {
+      .upload(fileName, JSON.stringify(arr, null, 2), {
         upsert: true,
         contentType: "application/json"
       });
 
     res.status(200).send("Сохранено");
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Ошибка");
+  } catch (e) {
+    console.error("SERVER ERROR:", e);
+    res.status(500).send("Ошибка сервера");
   }
-  
-
 }
