@@ -8,33 +8,41 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Метод запрещён");
 
-  const { userInput } = req.body;
-  if (!userInput) return res.status(400).send("Нет данных");
+  const { name, gift } = req.body;
+  if (!name || !gift) return res.status(400).send("Нет данных");
 
   const fileName = "data.txt";
-// dwa
-  const { data: existing, error: downloadError } = await supabase
-    .storage
-    .from(process.env.SUPABASE_BUCKET)
-    .download(fileName);
 
-  let currentText = "";
-  if (existing) {
-    currentText = await existing.text();
+  try {
+    // Скачиваем существующий файл
+    const { data: existing, error: downloadError } = await supabase
+      .storage
+      .from(process.env.SUPABASE_BUCKET)
+      .download(fileName);
+
+    let currentText = "";
+    if (existing) {
+      currentText = await existing.text();
+    }
+
+    // Добавляем новую запись
+    const newText = currentText + `Имя: ${name}, Подарок: ${gift}\n`;
+    const buffer = Buffer.from(newText, "utf8");
+
+    // Загружаем обратно с upsert
+    const { error: uploadError } = await supabase
+      .storage
+      .from(process.env.SUPABASE_BUCKET)
+      .upload(fileName, buffer, {
+        contentType: "text/plain",
+        upsert: true
+      });
+
+    if (uploadError) return res.status(500).send("Ошибка сохранения");
+
+    return res.status(200).send("Сохранено");
+
+  } catch (err) {
+    return res.status(500).send("Ошибка сервера");
   }
-
-  const newText = currentText + userInput + "\n";
-  const buffer = Buffer.from(newText, "utf8");
-
-  const { error: uploadError } = await supabase
-    .storage
-    .from(process.env.SUPABASE_BUCKET)
-    .upload(fileName, buffer, {
-      contentType: "text/plain",
-      upsert: true
-    });
-
-  if (uploadError) return res.status(500).send("Ошибка сохранения");
-
-  return res.status(200).send("Сохранено");
 }
