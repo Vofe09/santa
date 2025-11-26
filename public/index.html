@@ -110,14 +110,15 @@ document.getElementById("f").addEventListener("submit", async e => {
 });
 
 // Снежинки
-const snowflakesCount = 40;
+const snowflakesCount = 120;
 for(let i=0;i<snowflakesCount;i++){
   const snow = document.createElement('div');
   snow.classList.add('snowflake');
   snow.style.left = Math.random()*100+'vw';
-  snow.style.fontSize = (Math.random()*15+10)+'px';
-  snow.style.animationDuration = (Math.random()*5+5)+'s';
-  snow.style.opacity = Math.random();
+    snow.style.fontSize = (Math.random()*20+15)+'px'; // больше размер
+    snow.style.animationDuration = (Math.random()*4+4)+'s'; // чуть быстрее
+    snow.style.opacity = Math.random() * 0.6 + 0.4; // более заметные, меньше прозрачность
+
   snow.textContent = '❄';
   document.body.appendChild(snow);
 }
