@@ -1,81 +1,48 @@
-export const config = {
-  api: {
-    bodyParser: false
-  }
-};
-
-import { createClient } from '@supabase/supabase-js';
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).send("Only POST allowed");
   }
 
-  // ЧИТАЕМ RAW BODY ВРУЧНУЮ
-  let raw = "";
-  await new Promise(resolve => {
-    req.on("data", chunk => (raw += chunk));
-    req.on("end", resolve);
-  });
+  const BIN_ID = process.env.JSONBIN_ID;
+  const KEY = process.env.JSONBIN_KEY;
 
-  if (!raw) {
-    return res.status(400).json({ error: "Empty body" });
-  }
+  const { name, gift } = req.body;
 
-  let data;
   try {
-    data = JSON.parse(raw);
-  } catch (e) {
-    return res.status(400).json({ error: "Invalid JSON" });
-  }
-
-  const { name, gift } = data;
-
-  if (!name || !gift) {
-    return res.status(400).json({ error: "Missing fields" });
-  }
-
-  // Supabase init
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-
-  // --- Работа с файлом data.json ---
-  const fileName = "data.json";
-
-  // ЧИТАЕМ существующий JSON
-  const { data: existingFile } = await supabase
-    .storage
-    .from(process.env.SUPABASE_BUCKET)
-    .download(fileName);
-
-  let list = [];
-
-  if (existingFile) {
-    const text = await existingFile.text();
-    try {
-      list = JSON.parse(text);
-    } catch {}
-  }
-
-  // ДОБАВЛЯЕМ новую запись
-  list.push({ name, gift });
-
-  // Пишем обратно
-  const buffer = Buffer.from(JSON.stringify(list, null, 2), "utf8");
-
-  const { error: uploadError } = await supabase.storage
-    .from(process.env.SUPABASE_BUCKET)
-    .upload(fileName, buffer, {
-      contentType: "application/json",
-      upsert: true
+    // 1. Получаем текущие данные
+    const getRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: {
+        "X-Master-Key": KEY
+      }
     });
 
-  if (uploadError) {
-    console.log(uploadError);
-    return res.status(500).json({ error: "Save failed" });
-  }
+    let json = {};
 
-  return res.status(200).json({ ok: true });
+    if (getRes.ok) {
+      const data = await getRes.json();
+      json = data.record || {};
+    }
+
+    // 2. Номер новой записи
+    const count = Object.keys(json).length;
+    const newKey = `request${count + 1}`;
+
+    // 3. Добавляем новую запись
+    json[newKey] = { name, gift };
+
+    // 4. Сохраняем файл обратно
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": KEY
+      },
+      body: JSON.stringify(json)
+    });
+
+    res.status(200).send("Добавлено!");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка JSONBin");
+  }
 }
