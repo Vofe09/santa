@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Жеребьёвка Тайного Санты</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f6d365, #fda085);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px 50px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    width: 450px;
+    text-align: center;
+  }
+  button {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 10px;
+    background: #ff7a59;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-bottom: 20px;
+  }
+  button:hover {
+    background: #e96044;
+  }
+  #result div {
+    margin: 8px 0;
+    padding: 10px;
+    background: #fff4e6;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Жеребьёвка Тайного Санты</h1>
+  <button id="run">Провести жеребьёвку</button>
+  <div id="result"></div>
+</div>
+
+<script>
+// Функция перемешивания массива
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+document.getElementById("run").onclick = async () => {
+  const result = document.getElementById("result");
+  result.innerHTML = "Загрузка участников...";
+
+  // 1. Загружаем список
+  const r = await fetch("/api/list");
+  const data = await r.json();
+
+  const people = Object.values(data).map(p => p.name);
+
+  if (people.length < 2) {
+    result.innerHTML = "Недостаточно участников!";
+    return;
+  }
+
+  // 2. Создаём копию и перемешиваем
+  let givers = [...people];
+  let receivers = shuffle([...people]);
+
+  // 3. Проверяем, чтобы никто не получил самого себя
+  let attempts = 0;
+  while (givers.some((p, i) => p === receivers[i]) && attempts < 100) {
+    receivers = shuffle([...people]);
+    attempts++;
+  }
+
+  // Если не удалось — переставляем вручную
+  if (givers.some((p, i) => p === receivers[i])) {
+    const i = givers.findIndex((p, idx) => p === receivers[idx]);
+    const j = (i + 1) % people.length;
+    [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
+  }
+
+  // 4. Показ результата
+  result.innerHTML = "";
+  givers.forEach((giver, i) => {
+    const rec = receivers[i];
+    result.innerHTML += `<div><b>${giver}</b> → ${rec}</div>`;
+  });
+};
+</script>
+</body>
+</html>
