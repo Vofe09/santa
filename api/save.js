@@ -7,16 +7,16 @@ export const config = {
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  console.log("METHOD:", req.method);
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-  // Читаем тело вручную
+  // ЧИТАЕМ RAW BODY ВРУЧНУЮ
   let raw = "";
   await new Promise(resolve => {
-    req.on("data", chunk => raw += chunk);
+    req.on("data", chunk => (raw += chunk));
     req.on("end", resolve);
   });
-
-  console.log("RAW BODY:", raw);
 
   if (!raw) {
     return res.status(400).json({ error: "Empty body" });
@@ -35,19 +35,47 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing fields" });
   }
 
-  // Инициализация Supabase
+  // Supabase init
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  // Запись в БД
-  const { error } = await supabase.from("wishes").insert({ name, gift });
+  // --- Работа с файлом data.json ---
+  const fileName = "data.json";
 
-  if (error) {
-    console.log("SUPABASE ERROR:", error);
-    return res.status(500).json({ error: "Supabase error" });
+  // ЧИТАЕМ существующий JSON
+  const { data: existingFile } = await supabase
+    .storage
+    .from(process.env.SUPABASE_BUCKET)
+    .download(fileName);
+
+  let list = [];
+
+  if (existingFile) {
+    const text = await existingFile.text();
+    try {
+      list = JSON.parse(text);
+    } catch {}
   }
 
-  res.status(200).json({ ok: true });
+  // ДОБАВЛЯЕМ новую запись
+  list.push({ name, gift });
+
+  // Пишем обратно
+  const buffer = Buffer.from(JSON.stringify(list, null, 2), "utf8");
+
+  const { error: uploadError } = await supabase.storage
+    .from(process.env.SUPABASE_BUCKET)
+    .upload(fileName, buffer, {
+      contentType: "application/json",
+      upsert: true
+    });
+
+  if (uploadError) {
+    console.log(uploadError);
+    return res.status(500).json({ error: "Save failed" });
+  }
+
+  return res.status(200).json({ ok: true });
 }
