@@ -1,19 +1,126 @@
-<form id="f">
-  <input type="text" id="t">
-  <input type="submit" value="Сохранить">
-</form>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Тайный Санта</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px 60px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    text-align: center;
+    animation: fadeIn 1.2s ease forwards;
+    z-index: 1;
+    position: relative;
+  }
+  h1 {
+    margin-bottom: 30px;
+    color: #4a90e2;
+    animation: slideDown 1s ease forwards;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    transform: scale(1.05);
+    border-color: #4a90e2;
+  }
+  input[type="submit"] {
+    padding: 15px 40px;
+    border: none;
+    border-radius: 10px;
+    background: #4a90e2;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.3s, transform 0.2s;
+  }
+  input[type="submit"]:hover {
+    background: #357abd;
+    transform: scale(1.05);
+  }
+  @keyframes fadeIn {
+    from {opacity: 0; transform: scale(0.8);}
+    to {opacity: 1; transform: scale(1);}
+  }
+  @keyframes slideDown {
+    from {opacity:0; transform: translateY(-20px);}
+    to {opacity:1; transform: translateY(0);}
+  }
+  .snowflake {
+    position: absolute;
+    top: -10px;
+    color: #fff;
+    font-size: 1em;
+    user-select: none;
+    z-index: 0;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes fall {
+    0% {transform: translateY(0) rotate(0deg);}
+    100% {transform: translateY(110vh) rotate(360deg);}
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Тайный Санта</h1>
+    <form id="f">
+      <input type="text" id="name" placeholder="Ваше имя" required>
+      <input type="text" id="gift" placeholder="Желаемый подарок" required>
+      <input type="submit" value="Сохранить">
+    </form>
+  </div>
 
 <script>
 document.getElementById("f").addEventListener("submit", async e => {
   e.preventDefault();
-  const text = document.getElementById("t").value;
+  const name = document.getElementById("name").value;
+  const gift = document.getElementById("gift").value;
 
   const r = await fetch("/api/save", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ userInput: text })
+    body: JSON.stringify({ name, gift })
   });
 
   alert(await r.text());
 });
+
+// Снежинки
+const snowflakesCount = 40;
+for(let i=0;i<snowflakesCount;i++){
+  const snow = document.createElement('div');
+  snow.classList.add('snowflake');
+  snow.style.left = Math.random()*100+'vw';
+  snow.style.fontSize = (Math.random()*15+10)+'px';
+  snow.style.animationDuration = (Math.random()*5+5)+'s';
+  snow.style.opacity = Math.random();
+  snow.textContent = '❄';
+  document.body.appendChild(snow);
+}
 </script>
+</body>
+</html>
