@@ -33,8 +33,10 @@ export default async function handler(req, res) {
     const body = await readBody(req);
     const userInput = body.userInput;
 
-    if (!userInput)
+    if (!userInput) {
+      console.log("No user input")
       return res.status(400).send("Нет данных");
+    }
 
     const fileName = "data.json";
 
@@ -73,4 +75,6 @@ export default async function handler(req, res) {
     console.error(err);
     res.status(500).send("Ошибка");
   }
+  console.log("BODY:", body);
+
 }
