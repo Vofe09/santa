@@ -14,9 +14,11 @@ body {
   margin: 0;
   overflow: hidden;
   position: relative;
-  padding: 0 15px;      /* помогает на малых экранах */
+  padding: 0 15;      /* помогает на малых экранах */
 }
-
+*, *::before, *::after {
+  box-sizing: inherit; /* чтобы padding и border не ломали ширину */
+}
 .container {
   background: rgba(255, 255, 255, 0.92);
   padding: 40px 60px;
@@ -27,7 +29,7 @@ body {
   z-index: 1;
   position: relative;
   width: 100%;
-  max-width: 450px;     /* адаптивный лимит */
+  max-width: 700px;     /* адаптивный лимит */
 }
 
 h1 {
